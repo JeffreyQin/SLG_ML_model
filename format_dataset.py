@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 
 def preproc_label(raw_label_file):
+    return ''
     with open(raw_label_file, 'r') as f:
         label = f.read()
         label = label.lower()
@@ -20,7 +21,7 @@ def format_dataset(raw_folder='raw_data', formatted_folder='motion_data'):
 
     for sess_idx, sess in tqdm(enumerate(os.listdir(raw_folder))):
         sess_folder = os.path.join(raw_folder, sess)
-        formatted_sess_folder = os.path.join(formatted_folder, 'session_' + str(sess_idx))
+        formatted_sess_folder = os.path.join(formatted_folder, str(sess_idx) + '_session')
         if not os.path.isdir(formatted_sess_folder):
             os.mkdir(formatted_sess_folder)
         for example_idx, example in enumerate(os.listdir(sess_folder)):
@@ -37,6 +38,7 @@ def format_dataset(raw_folder='raw_data', formatted_folder='motion_data'):
             with open(os.path.join(formatted_sess_folder, str(example_idx) + '.json'), 'w') as f:
                 data = {
                     "session": sess_idx,
+                    "example": example_idx,
                     "label": processed_label
                 }
                 json.dump(data, f)
