@@ -9,7 +9,7 @@ def generate_split(split: list[int], folder='motion_data'):
 
     for file in os.listdir(folder):
         if file.endswith('.json'):
-            data_idx = int(file[0])
+            data_idx = int(file.split('.')[0])
 
             category = random.choices(['train', 'val', 'test'], split)[0]
             if category == 'train':
