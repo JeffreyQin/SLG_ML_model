@@ -2,19 +2,21 @@ import torchtext
 import torch
 import numpy as np
 
-# expected shape: [# timestamp, # channel]
+# expected shape: [# timestamp, # feature]
 def z_score_normalize(input):
-    channel_mean = np.mean(input, axis=0)
-    channel_std = np.std(input, axis=0)
-    input = (input / channel_mean) / channel_std
+    mean_per_feature = np.mean(input, axis=0)
+    std_per_feature = np.std(input, axis=0)
+    input = (input / mean_per_feature) / std_per_feature
     return input
 
-# expected shape: [# timestamp, # channel]
+# expected shape: [# timestamp, # feature]
 def moving_average(input, window_size=5):
     kernel = np.ones(window_size) / window_size
     convolved = np.zeros(shape=(input.shape[0] - window_size + 1, input.shape[1]))
-    for channel in range(input.shape[1]):
-        convolved[:,channel] = np.convolve(input[:,channel], kernel, mode='valid')
+
+    for feature in range(input.shape[1]):
+        convolved[:,feature] = np.convolve(input[:,feature], kernel, mode='valid')
+
     return convolved
 
 def unity_length(input, length=100):
@@ -23,7 +25,7 @@ def unity_length(input, length=100):
 def crop_invalid(input):
     return input[1:]
 
-# expected shape: [batch, # timestamp, # channel]
+# expected shape: [batch, # timestamp, # feature]
 def preproc_timeseries(inputs):
 
     for idx, input in enumerate(inputs):
