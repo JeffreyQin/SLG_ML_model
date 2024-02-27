@@ -1,3 +1,4 @@
+
 import torch
 from torch import utils, nn
 import numpy as np
@@ -9,13 +10,14 @@ import os, sys, json
 
 
 class MotionDataset(utils.data.Dataset):
-    def __init__(self, test=False, val=False, tokenizer):
+    def __init__(self, tokenizer, test=False, val=False):
         
         self.tokenizer = tokenizer
         
         with open('config.json', 'r') as config_file:
             config = json.load(config_file)
             data_folder = config['formatted_data_folder']
+
         with open('dataset_split.json', 'r') as dataset_split:
             data = json.load(dataset_split)
             if not test and not val:
@@ -42,4 +44,3 @@ class MotionDataset(utils.data.Dataset):
 
     def __getitem__(self, index):
         return self.X[index], self.Y[index], self.lengths[index]
-

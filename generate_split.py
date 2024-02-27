@@ -32,4 +32,4 @@ def generate_split(split: list[int], folder='motion_data'):
 if __name__ == '__main__':
     with open('config.json', 'r') as config_file:
         config = json.load(config_file)
-        generate_split(config['train_val_test_split'])
+        generate_split(config['train_val_test_split'], config['formatted_data_folder'])

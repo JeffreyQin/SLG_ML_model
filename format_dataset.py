@@ -48,4 +48,4 @@ def format_dataset(raw_folder='raw_data', formatted_folder='motion_data'):
 if __name__ == '__main__':
     with open('config.json', 'r') as config_file:
         config = json.load(config_file)
-        format_dataset(config['raw_data_folder'])
+        format_dataset(config['raw_data_folder'], config['formatted_data_folder'])

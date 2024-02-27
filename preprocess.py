@@ -1,6 +1,7 @@
 import torchtext
 import torch
 import numpy as np
+import os, json
 
 # expected shape: [# timestamp, # feature]
 def z_score_normalize(input):
@@ -39,20 +40,38 @@ def preproc_timeseries(inputs):
 
 
 class Tokenizer(object):
-    def __init__(self):
-        pass
+    def __init__(self, type='char'):
 
-    def char_tokenize(self, labels):
-        tokenizer = torchtext.data.utils.get_tokenizer(tokenizer=(lambda text: list(text)), language='en')
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+            data_folder = config['formatted_data_folder']
+            num_examples = len(os.listdir(data_folder)) // 3
 
-        def yield_tokens(texts):
-            for text in texts:
-                yield tokenizer(text)
-        self.vocab = torchtext.vocab.build_vocab_from_iterator(yield_tokens(labels), min_freq=1, specials=['<pad>'])
-        
-        embeddings = [[self.vocab[token] for token in tokenizer(label)] for label in labels]
-        lengths = [len(embedding) for embedding in embeddings]
+        self.type = type
+
+        if self.type == 'char':
+            labels = []
+            for idx in range(num_examples):
+                with open(os.path.join(data_folder, str(idx) + '.txt'), 'r') as label_file:
+                    label = label_file.read()
+                    labels.append(label)
+
+            tokenizer = torchtext.data.utils.get_tokenizer(tokenizer=lambda text: list(text), language='en')
+
+            def yield_tokens(texts):
+                for text in texts:
+                    yield tokenizer(text)
+            
+            self.vocab = torchtext.vocab.build_vocab_from_iterator(yield_tokens(labels), min_freq=1, specials=['<pad>'])
+            self.embeddings = [[self.vocab[token] for token in tokenizer(label)] for label in labels]
+            self.lengths = [len(embedding) for embedding in self.embeddings]
+        else:
+            pass
+
+    def get_tokenized(self, indices):
+        embeddings = [self.embeddings[idx] for idx in indices]
+        lengths = [self.lengths[idx] for idx in indices]
         return embeddings, lengths, self.vocab
-
-    def subword_tokenizer():
+    
+    def decode_embeddings(self, embedding):
         pass
