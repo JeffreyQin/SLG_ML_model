@@ -12,7 +12,10 @@ class MotionDataset(utils.data.Dataset):
     def __init__(self, test=False, val=False, tokenizer):
         
         self.tokenizer = tokenizer
-
+        
+        with open('config.json', 'r') as config_file:
+            config = json.load(config_file)
+            data_folder = config['formatted_data_folder']
         with open('dataset_split.json', 'r') as dataset_split:
             data = json.load(dataset_split)
             if not test and not val:

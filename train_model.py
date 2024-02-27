@@ -33,6 +33,8 @@ def main():
     else:
         logging.info('cuda device NOT available')
         device = 'cpu'
+
+    
     
     if FLAGS.evaluate_saved is not None:
         testset = MotionDataset(test=True)
