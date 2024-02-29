@@ -40,6 +40,7 @@ def preproc_timeseries(inputs):
 
 
 class Tokenizer(object):
+
     def __init__(self, type='char'):
 
         with open('config.json', 'r') as config_file:
@@ -47,31 +48,61 @@ class Tokenizer(object):
             data_folder = config['formatted_data_folder']
             num_examples = len(os.listdir(data_folder)) // 3
 
+        labels = []
+        for idx in range(num_examples):
+            with open(os.path.join(data_folder, str(idx) + '.txt'), 'r') as label_file:
+                label = label_file.read()
+                labels.append(label)
+
         self.type = type
-
-        if self.type == 'char':
-            labels = []
-            for idx in range(num_examples):
-                with open(os.path.join(data_folder, str(idx) + '.txt'), 'r') as label_file:
-                    label = label_file.read()
-                    labels.append(label)
-
-            tokenizer = torchtext.data.utils.get_tokenizer(tokenizer=lambda text: list(text), language='en')
-
-            def yield_tokens(texts):
-                for text in texts:
-                    yield tokenizer(text)
-            
-            self.vocab = torchtext.vocab.build_vocab_from_iterator(yield_tokens(labels), min_freq=1, specials=['<pad>'])
-            self.embeddings = [[self.vocab[token] for token in tokenizer(label)] for label in labels]
-            self.lengths = [len(embedding) for embedding in self.embeddings]
-        else:
+        
+        if self.type == 'subword':
             pass
 
-    def get_tokenized(self, indices):
-        embeddings = [self.embeddings[idx] for idx in indices]
-        lengths = [self.lengths[idx] for idx in indices]
-        return embeddings, lengths, self.vocab
+        else:
+            def yield_tokens(texts):
+                for text in texts:
+                    yield self.tokenizer(text)
+
+            if self.type == 'char':
+                self.tokenizer = torchtext.data.utils.get_tokenizer(tokenizer=lambda text: list(text), language='en')
+            elif self.type == 'word':
+                self.tokenizer = torchtext.data.utils.get_tokenizer('basic_english')
+            
+            self.vocab = torchtext.vocab.build_vocab_from_iterator(yield_tokens(labels), min_freq=1, specials=['<pad>'])
+            self.text_to_int = self.vocab.get_stoi()
+            self.int_to_text = {int(value): str(key) for key, value in self.text_to_int.items()}
+            
+
+    def create_vocab_file(self, path='vocab.json'):
+        with open(path, 'w') as f:
+            json.dump({
+                "text_to_int": self.text_to_int,
+                "int_to_text": self.int_to_text
+            }, f)
+
+    def get_tokenized(self, labels, vocab_file=None):
+        
+        # check if custom vocab is used
+        if vocab_file is None:
+            embeddings = [[self.text_to_int[token] for token in self.tokenizer(label)] for label in labels]
+        else:
+            with open(vocab_file, 'r') as f:
+                text_to_int = json.load(vocab_file)['text_to_int']
+            embeddings = [[text_to_int[token] for token in self.tokenizer(label)] for label in labels]
+            
+        lengths = [len(embedding) for embedding in embeddings]
+        return embeddings, lengths
     
-    def decode_embeddings(self, embedding):
-        pass
+    
+    def decode_tokenized(self, embeddings, vocab_file='vocab.json'):
+
+        # check if custom vocab is used
+        if vocab_file is None:
+            texts = [[self.int_to_text[idx] for idx in embedding] for embedding in embeddings]
+        else: 
+            with open(vocab_file, 'r') as f:
+                int_to_text = json.load(vocab_file)['int_to_text']
+            texts = [[int_to_text[idx] for idx in embedding] for embedding in embeddings]
+        
+        return texts
