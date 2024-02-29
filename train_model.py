@@ -3,7 +3,7 @@ from torch import nn, utils, optim
 import numpy as np
 
 from dataset import MotionDataset
-from architecture import LSTMModel
+from architecture import LSTMEncoder
 from preprocess import Tokenizer
 
 from tqdm import tqdm
@@ -47,7 +47,7 @@ def train(train_dataset, val_dataset, device):
     dataloader = utils.data.DataLoader(train_dataset, batch_size=FLAGS.batch_size, shuffle=False)
     vocab_size = len(train_dataset.tokenizer.vocab)
 
-    model = LSTMModel(input_size=8, vocab_size=vocab_size).to(device)
+    model = LSTMEncoder(input_size=8).to(device)
     optimizer = optim.Adam(model.parameters(), lr=FLAGS.learning_rate)
     ctc_loss_fn = nn.CTCLoss(blank=0, zero_infinity=True) # 0 (blank) is the vocab index of <pad>
 

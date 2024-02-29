@@ -1,5 +1,7 @@
 import torchtext
 import torch
+from torch import nn 
+
 import numpy as np
 import os, json
 
@@ -72,11 +74,13 @@ class Tokenizer(object):
             self.vocab = torchtext.vocab.build_vocab_from_iterator(yield_tokens(labels), min_freq=1, specials=['<pad>'])
             self.text_to_int = self.vocab.get_stoi()
             self.int_to_text = {int(value): str(key) for key, value in self.text_to_int.items()}
-            
 
+            self.vocab_size = len(self.text_to_int)
+            
     def create_vocab_file(self, path='vocab.json'):
         with open(path, 'w') as f:
             json.dump({
+                "vocab_size": self.vocab_size,
                 "text_to_int": self.text_to_int,
                 "int_to_text": self.int_to_text
             }, f)
@@ -86,23 +90,31 @@ class Tokenizer(object):
         # check if custom vocab is used
         if vocab_file is None:
             embeddings = [[self.text_to_int[token] for token in self.tokenizer(label)] for label in labels]
+            vocab_size = self.vocab_size
         else:
             with open(vocab_file, 'r') as f:
-                text_to_int = json.load(vocab_file)['text_to_int']
+                vocab = json.load(vocab_file)
+                text_to_int = vocab['text_to_int']
+                vocab_size = vocab['vocab_size']
             embeddings = [[text_to_int[token] for token in self.tokenizer(label)] for label in labels]
-            
-        lengths = [len(embedding) for embedding in embeddings]
-        return embeddings, lengths
+
+        embeddings = torch.tensor(embeddings)
+        lengths = [embedding.size(0) for embedding in embeddings]
+        one_hot_embeddings = nn.functional.one_hot(embeddings, vocab_size)
+
+        return one_hot_embeddings, lengths
     
     
-    def decode_tokenized(self, embeddings, vocab_file='vocab.json'):
+    def decode_tokenized(self, one_hot_embedding, vocab_file='vocab.json'):
+
+        embedding = torch.argmax(one_hot_embedding, dim=1)
 
         # check if custom vocab is used
         if vocab_file is None:
-            texts = [[self.int_to_text[idx] for idx in embedding] for embedding in embeddings]
+            text = [self.int_to_text[idx] for idx in embedding]
         else: 
             with open(vocab_file, 'r') as f:
                 int_to_text = json.load(vocab_file)['int_to_text']
-            texts = [[int_to_text[idx] for idx in embedding] for embedding in embeddings]
-        
-        return texts
+            text = [int_to_text[idx] for idx in embedding]
+
+        return text
