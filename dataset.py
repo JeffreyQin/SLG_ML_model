@@ -38,15 +38,14 @@ class MotionDataset(utils.data.Dataset):
             labels.append(label)
 
         self.X = preproc_timeseries(inputs)
+        self.Y, self.lengths = self.tokenizer.get_tokenized(labels)
 
-        self.embeddings, self.lengths = self.tokenizer.get_tokenized(labels)
-        self.Y = nn.utils.rnn.pad_sequence([torch.tensor(embedding) for embedding in self.embeddings], batch_first=True)
 
     def __len__(self):
         return len(self.indices)
 
     def __getitem__(self, index):
-        X = torch.tensor(self.X[index]).type(torch.float32)
+        X = self.X[index].type(torch.float32)
         Y = self.Y[index].type(torch.float32)
         len = torch.tensor(self.lengths[index]).type(torch.int64)
         return X, Y, len

@@ -40,7 +40,7 @@ SCALED DOT PRODUCT ATTENTION mechanism
 """
 class SelfAttention(nn.Module):
 
-    def __init__(self, input_size=32):
+    def __init__(self, input_size=256):
         super(SelfAttention, self).__init__()
 
         self.num_features = input_size
@@ -57,21 +57,22 @@ class SelfAttention(nn.Module):
         value_vecs = self.value_matrix(x)
 
         # calculate attention score matrix
-        att_scores = torch.matmul(query_vecs, key_vecs.permute(0, 2, 1))
-        att_scores /= math.sqrt(float(self.num_features))
+        attn_scores = torch.matmul(query_vecs, key_vecs.permute(0, 2, 1))
+        attn_scores /= math.sqrt(float(self.num_features))
 
         # weighted attention
-        att_weights = nn.functional.softmax(att_scores, dim=-1) 
+        attn_weights = nn.functional.softmax(attn_scores, dim=-1) 
 
-        outputs = torch.matmul(att_weights, value_vecs)
-        return outputs, att_weights
+        outputs = torch.matmul(attn_weights, value_vecs)
+
+        return outputs, attn_weights
 
 
 """ 
 LSTM Model
 """
 
-class LSTMModel(nn.module):
+class LSTMModel(nn.Module):
     
     def __init__(self, output_size, input_size=8):
         super(LSTMModel, self).__init__()
@@ -102,8 +103,8 @@ class LSTMModel(nn.module):
     
     """
     downsample layer
-        - input shape: [batch, # channels = 8, # timestamps]
-        - output shape: [batch, # channels = 16, # timestamps (downsampled)]
+        - input shape: [batch size, feature num, seq length]
+        - output shape: [batch size, feature num = 16, seq length (downsampled)]
 
     lstm layer (batch_first=True)  
         - expected input shape: [batch, # timestamps, # channels]
@@ -114,15 +115,13 @@ class LSTMModel(nn.module):
 
     """
     def forward(self, x):
-        """"
         x = x.permute(0, 2, 1)
         x = self.downsampler(x)
         x = x.permute(0, 2, 1)
-        """
 
         outputs, (final_hidden, final_cell) = self.lstm_layer(x)
 
-        outputs, _ = self.attention(outputs)
+        outputs, attention_weights = self.attention(outputs)
 
         outputs = self.linear_layer(outputs)
 

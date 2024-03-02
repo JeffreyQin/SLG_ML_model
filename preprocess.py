@@ -38,6 +38,8 @@ def preproc_timeseries(inputs):
         # input = unify_length(input, length=100)
         inputs[idx] = input
 
+    inputs = [torch.tensor(input) for input in inputs]
+    inputs = nn.utils.rnn.pad_sequence(inputs, batch_first=True)
     return inputs
 
 
@@ -97,9 +99,11 @@ class Tokenizer(object):
                 text_to_int = vocab['text_to_int']
                 vocab_size = vocab['vocab_size']
             embeddings = [[text_to_int[token] for token in self.tokenizer(label)] for label in labels]
-
-        embeddings = torch.tensor(embeddings)
+        
+        embeddings = [torch.tensor(embedding) for embedding in embeddings]
         lengths = [embedding.size(0) for embedding in embeddings]
+        embeddings = nn.utils.rnn.pad_sequence(embeddings, batch_first=True)
+
         one_hot_embeddings = nn.functional.one_hot(embeddings, vocab_size)
 
         return one_hot_embeddings, lengths
