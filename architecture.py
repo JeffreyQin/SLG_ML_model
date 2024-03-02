@@ -107,11 +107,14 @@ class LSTMModel(nn.Module):
         - output shape: [batch size, feature num = 16, seq length (downsampled)]
 
     lstm layer (batch_first=True)  
-        - expected input shape: [batch, # timestamps, # channels]
-        - output shape: [batch, # timestamps, hidden dim (x2 for bidir)]
+        - input shape: [batch size, seq length, feature num]
+        - output shape: [batch size, seq length, hidden dim (x2 for bidir)]
+
+    attention layer
+        - output shape: [batch size, seq length, hidden dim (x2 for bidir)]
 
     linear layer 
-        - output shape: [batch, # timestamps, # features = vocab_size] (passed to softmax)
+        - output shape: [batch size, seq length, feature num = vocab_size] (passed to softmax)
 
     """
     def forward(self, x):
@@ -123,7 +126,7 @@ class LSTMModel(nn.Module):
 
         outputs, attention_weights = self.attention(outputs)
 
-        outputs = self.linear_layer(outputs)
+        outputs = self.linear_layer(outputs)    
 
         # softmax probabilities
         output_probs = nn.functional.softmax(outputs, dim=2)

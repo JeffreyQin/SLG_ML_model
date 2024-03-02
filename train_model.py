@@ -49,7 +49,7 @@ def train(train_dataset, val_dataset, device):
 
     model = LSTMModel(input_size=8, output_size=vocab_size).to(device)
     optimizer = optim.Adam(model.parameters(), lr=FLAGS.learning_rate)
-    ctc_loss_fn = nn.CTCLoss(blank=0, zero_infinity=True) # 0 (blank) is the vocab index of <pad>
+    BCE_loss_fn = 
 
     best_epoch_loss = float('inf')
     best_epoch_acc = float('-inf')
