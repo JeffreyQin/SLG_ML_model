@@ -92,33 +92,29 @@ class Tokenizer(object):
         # check if custom vocab is used
         if vocab_file is None:
             embeddings = [[self.text_to_int[token] for token in self.tokenizer(label)] for label in labels]
-            vocab_size = self.vocab_size
         else:
             with open(vocab_file, 'r') as f:
-                vocab = json.load(vocab_file)
+                vocab = json.load(f)
                 text_to_int = vocab['text_to_int']
-                vocab_size = vocab['vocab_size']
             embeddings = [[text_to_int[token] for token in self.tokenizer(label)] for label in labels]
         
+        lengths = [len(embedding) for embedding in embeddings]
         embeddings = [torch.tensor(embedding) for embedding in embeddings]
-        lengths = [embedding.size(0) for embedding in embeddings]
         embeddings = nn.utils.rnn.pad_sequence(embeddings, batch_first=True)
 
-        one_hot_embeddings = nn.functional.one_hot(embeddings, vocab_size)
-
-        return one_hot_embeddings, lengths
+        return embeddings, lengths
     
     
-    def decode_tokenized(self, one_hot_embedding, vocab_file='vocab.json'):
-
-        embedding = torch.argmax(one_hot_embedding, dim=1)
+    def decode_tokenized(self, embedding, vocab_file='vocab.json'):
 
         # check if custom vocab is used
         if vocab_file is None:
-            text = [self.int_to_text[idx] for idx in embedding]
+            text = [self.int_to_text[str(idx.item())] for idx in embedding]
         else: 
             with open(vocab_file, 'r') as f:
-                int_to_text = json.load(vocab_file)['int_to_text']
-            text = [int_to_text[idx] for idx in embedding]
+                vocab = json.load(f)
+                int_to_text = vocab['int_to_text']
+            text = [int_to_text[str(idx.item())] for idx in embedding]
 
-        return text
+        return ''.join(text)
+

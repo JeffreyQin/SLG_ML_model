@@ -22,12 +22,16 @@ class DownSampler(nn.Module):
             nn.ReLU(inplace=True),
             nn.AvgPool1d(kernel_size=2, stride=2),
 
-            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=8, stride=2),
+            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+            nn.ReLU(inplace=True),
+            nn.AvgPool1d(kernel_size=2, stride=2),
+
+            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(inplace=True),
             nn.AvgPool1d(kernel_size=2, stride=2)
         )
         
-        self.norm_layer = nn.BatchNorm1d(num_features=32)
+        self.norm_layer = nn.BatchNorm1d(num_features=64)
 
     def forward(self, x):
         x = self.conv_layers(x)
@@ -77,7 +81,7 @@ class LSTMModel(nn.Module):
     def __init__(self, output_size, input_size=8):
         super(LSTMModel, self).__init__()
 
-        self.lstm_input_dim = 32
+        self.lstm_input_dim = 64
         self.lstm_hidden_dim = 128
         self.num_lstm_layers = 2
         self.bidir_lstm = True

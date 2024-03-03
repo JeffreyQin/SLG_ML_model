@@ -46,7 +46,7 @@ class MotionDataset(utils.data.Dataset):
 
     def __getitem__(self, index):
         X = self.X[index].type(torch.float32)
-        Y = self.Y[index].type(torch.float32)
-        len = torch.tensor(self.lengths[index]).type(torch.int64)
+        Y = self.Y[index].type(torch.long)
+        len = torch.tensor(self.lengths[index]).type(torch.long)
         return X, Y, len
 
