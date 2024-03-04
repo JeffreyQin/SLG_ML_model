@@ -14,4 +14,4 @@ Official ML repo. for the sign language interpreter.
 **Running model**
 
 1. To train a model, run ```python train_model.py``` with the ```evaluate_saved``` flag set to None.
-2. To evaluate a trained model, run ```python train_model.py``` with the ```evaluate saved``` flag appointed to your desired model path.
+2. To evaluate a trained model, run ```python train_model.py``` with the ```evaluate_saved``` flag appointed to your desired model path.
