@@ -18,7 +18,7 @@ FLAGS = flags.FLAGS
 flags.DEFINE_boolean('debug', False, '')
 flags.DEFINE_string('model_folder', 'models', '')
 flags.DEFINE_string('vocab_file', 'vocab.json', '')
-flags.DEFINE_string('evaluate_saved', 'model.pt', '')
+flags.DEFINE_string('evaluate_saved', None, '')
 flags.DEFINE_integer('batch_size', 3, '')
 flags.DEFINE_integer('train_epochs', 100, '')
 flags.DEFINE_float('learning_rate', 1e-3, '')
@@ -154,3 +154,4 @@ def main():
 if __name__ == '__main__':
     FLAGS(sys.argv)
     main()
+

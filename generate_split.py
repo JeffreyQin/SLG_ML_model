@@ -28,7 +28,6 @@ def generate_split(split: list[int], folder='motion_data'):
         json.dump(dataset_split, f)
     
                 
-
 if __name__ == '__main__':
     with open('config.json', 'r') as config_file:
         config = json.load(config_file)

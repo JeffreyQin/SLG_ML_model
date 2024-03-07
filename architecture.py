@@ -4,38 +4,34 @@ from torch import nn, utils
 import math
 
 
-
 """
-DOWN-SAMPLER to reduce input sequence length by summarizing features in adjacent timestamps
-    - inspired by Deep Speech 2
+Temporal CNN for feature extraction through time
+    - inspired by DeepSpeech2 & LipNet
 
-input shape: [batch size, num features = 8, seq length]
-output shape: [batch size, num features = 32, seq length (downsampled)]
+input shape: [batch size, input size, seq length]
+output shape: [batch size, output size, seq lenght (downsampled)
 """
-class DownSampler(nn.Module):
+class TemporalCNN(nn.Module):
     
     def __init__(self, input_size=8):
-        super(DownSampler, self).__init__()
+        super(TemporalCNN, self).__init__()
+
+        self.input_size = input_size
 
         self.conv_layers = nn.Sequential(
-            nn.Conv1d(in_channels=input_size, out_channels=16, kernel_size=8, stride=2),
+            nn.Conv1d(in_channels=self.input_size, out_channels=64, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(num_features=64),
             nn.ReLU(inplace=True),
-            nn.AvgPool1d(kernel_size=2, stride=2),
-
-            nn.Conv1d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+            nn.MaxPool1d(kernel_size=2, stride=2),
+            
+            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm1d(num_features=128),
             nn.ReLU(inplace=True),
-            nn.AvgPool1d(kernel_size=2, stride=2),
-
-            nn.Conv1d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.ReLU(inplace=True),
-            nn.AvgPool1d(kernel_size=2, stride=2)
+            nn.MaxPool1d(kernel_size=2, stride=2)
         )
-        
-        self.norm_layer = nn.BatchNorm1d(num_features=64)
 
     def forward(self, x):
         x = self.conv_layers(x)
-        x = self.norm_layer(x)
         return x
 
 """
@@ -74,19 +70,24 @@ class SelfAttention(nn.Module):
 
 """ 
 LSTM Model
-"""
+    - output size = dataset vocab size
+    - lstm input dim = temporal CNN output dim
 
+"""
 class LSTMModel(nn.Module):
     
     def __init__(self, output_size, input_size=8):
         super(LSTMModel, self).__init__()
 
-        self.lstm_input_dim = 64
+        self.input_size = input_size
+        self.output_size = output_size
+
+        self.lstm_input_dim = 128
         self.lstm_hidden_dim = 128
-        self.num_lstm_layers = 2
+        self.num_lstm_layers = 3
         self.bidir_lstm = True
 
-        self.downsampler = DownSampler(input_size=input_size)
+        self.conv_layer = TemporalCNN(input_size=input_size)
 
         self.lstm_layer = nn.LSTM(
             input_size=self.lstm_input_dim,
@@ -96,19 +97,19 @@ class LSTMModel(nn.Module):
             bidirectional=self.bidir_lstm
         )
 
-        self. lstm_output_dim = self.lstm_hidden_dim * 2 if self.bidir_lstm else self.lstm_hidden_dim
+        self.lstm_output_dim = self.lstm_hidden_dim * 2 if self.bidir_lstm else self.lstm_hidden_dim
 
         self.attention = SelfAttention(input_size=self.lstm_output_dim)
 
         self.linear_layer = nn.Linear(
             in_features=self.lstm_output_dim,
-            out_features=output_size # vocab size
+            out_features=output_size
         )
     
     """
     downsample layer
         - input shape: [batch size, feature num, seq length]
-        - output shape: [batch size, feature num = 16, seq length (downsampled)]
+        - output shape: [batch size, feature num, seq length (downsampled)]
 
     lstm layer (batch_first=True)  
         - input shape: [batch size, seq length, feature num]
@@ -123,18 +124,19 @@ class LSTMModel(nn.Module):
     """
     def forward(self, x):
         x = x.permute(0, 2, 1)
-        x = self.downsampler(x)
+        x = self.conv_layer(x)
         x = x.permute(0, 2, 1)
 
         outputs, (final_hidden, final_cell) = self.lstm_layer(x)
 
-        outputs, attention_weights = self.attention(outputs)
+        outputs, attn_weights = self.attention(outputs)
 
         outputs = self.linear_layer(outputs)    
 
         # softmax probabilities
-        output_probs = nn.functional.softmax(outputs, dim=2)
-        return output_probs
+        # output_probs = nn.functional.softmax(outputs, dim=2)
+
+        return outputs
         
 
 
