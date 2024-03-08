@@ -7,10 +7,9 @@ from preprocess import Tokenizer, preproc_timeseries
 
 import os, sys, json
 
-
 class MotionDataset(utils.data.Dataset):
     def __init__(self, tokenizer, test=False, val=False):
-        
+    
         self.tokenizer = tokenizer
         
         with open('config.json', 'r') as config_file:
