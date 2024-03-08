@@ -5,7 +5,7 @@ FROM python:3.6
 WORKDIR /app
 
 # install system dependencies
-RUN apt-get updates && \
+RUN apt-get update && \
     apt-get install -y libsndfile1 curl && \
     rm -rf /var/lib/apt/lists/*
 
