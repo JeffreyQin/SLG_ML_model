@@ -12,9 +12,7 @@ class MotionDataset(utils.data.Dataset):
     
         self.tokenizer = tokenizer
         
-        with open('config.json', 'r') as config_file:
-            config = json.load(config_file)
-            data_folder = config['formatted_data_folder']
+        data_folder = 'motion_data'
 
         with open('dataset_split.json', 'r') as dataset_split:
             data = json.load(dataset_split)

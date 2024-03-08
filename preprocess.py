@@ -47,10 +47,9 @@ class Tokenizer(object):
 
     def __init__(self, type='char'):
 
-        with open('config.json', 'r') as config_file:
-            config = json.load(config_file)
-            data_folder = config['formatted_data_folder']
-            num_examples = len(os.listdir(data_folder)) // 3
+
+        data_folder = 'motion_data'
+        num_examples = len(os.listdir(data_folder)) // 3
 
         labels = []
         for idx in range(num_examples):
